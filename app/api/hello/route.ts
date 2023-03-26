@@ -4,7 +4,7 @@ export async function POST(request: NextRequest) {
     const { prompt, imageUrl } = await request.json();
 
     const result = await fetch(
-        'https://stablediffusionapi.com/api/v3/img2img',
+        'https://stablediffusionapi.com/api/v3/dreambooth/img2img',
         {
             method: 'POST',
             headers: {
@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
             body: JSON.stringify({
                 key: process.env.STABLE_DIFFUSION_API_KEY,
                 prompt,
+                model_id: "midjourney",
                 negative_prompt: null,
                 init_image: imageUrl,
                 width: '512',
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
     while (json.status === 'processing') {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         const result = await fetch(
-            `https://stablediffusionapi.com/api/v3/fetch/${json.id}`,
+            `https://stablediffusionapi.com/api/v3/dreambooth/fetch/${json.id}`,
             {
                 method: 'POST',
                 headers: {
