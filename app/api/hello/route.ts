@@ -1,6 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET() {
+export async function POST(request: NextRequest) {
+    const { prompt, imageUrl } = await request.json();
+
     const result = await fetch(
         'https://stablediffusionapi.com/api/v3/img2img',
         {
@@ -10,10 +12,9 @@ export async function GET() {
             },
             body: JSON.stringify({
                 key: process.env.STABLE_DIFFUSION_API_KEY,
-                prompt: 'a cat sitting on a bench',
+                prompt,
                 negative_prompt: null,
-                init_image:
-                    'https://raw.githubusercontent.com/CompVis/stable-diffusion/main/data/inpainting_examples/overture-creations-5sI6fQgYIuo.png',
+                init_image: imageUrl,
                 width: '512',
                 height: '512',
                 samples: '1',
@@ -28,6 +29,23 @@ export async function GET() {
             }),
         },
     );
-    const json = await result.json();
+    let json = await result.json();
+    while (json.status === 'processing') {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const result = await fetch(
+            `https://stablediffusionapi.com/api/v3/fetch/${json.id}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    key: process.env.STABLE_DIFFUSION_API_KEY,
+                }),
+            },
+        );
+        json = await result.json();
+    }
+    
     return NextResponse.json(json);
 }
